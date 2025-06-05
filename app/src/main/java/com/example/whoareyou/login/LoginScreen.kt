@@ -14,7 +14,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -23,16 +22,9 @@ import com.example.whoareyou.R
 @Composable
 fun LoginScreen(
     loginViewModel: LoginViewModel = viewModel(),
-    onGoogleLoginClicked: () -> Unit = {},  // ActivityResultLauncher.launch()로 연결
-    onLoginSuccess: () -> Unit = {}
+    onGoogleLoginClicked: () -> Unit
 ) {
     val userName by loginViewModel.userName
-    val isFail by loginViewModel.isFailState
-
-    if (userName != null) {
-        // 로그인 성공 시 콜백 실행
-        onLoginSuccess()
-    }
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -75,7 +67,7 @@ fun LoginScreen(
                 .padding(bottom = 48.dp),
         ) {
             OutlinedButton(
-                onClick = { onGoogleLoginClicked() },
+                onClick = onGoogleLoginClicked,
                 shape = RoundedCornerShape(12.dp),
                 contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
                 modifier = Modifier
@@ -106,10 +98,4 @@ fun LoginScreen(
             }
         }
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewLoginScreen() {
-    LoginScreen()
 }
