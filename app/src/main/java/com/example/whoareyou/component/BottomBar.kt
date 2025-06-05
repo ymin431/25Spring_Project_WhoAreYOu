@@ -54,7 +54,7 @@ fun BottomBar(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp))
+                .clip(RoundedCornerShape(topStart = 25.dp, topEnd = 25.dp))
                 .background(color = Color.White)
                 .navigationBarsPadding(),
         ) {
@@ -90,13 +90,13 @@ fun BottomBarItem(
             painter = painterResource(id = icon),
             contentDescription = tab.label,
             modifier = Modifier
-                .size(25.dp)
+                .size(30.dp)
                 .padding(1.dp)
         )
         Spacer(modifier = Modifier.height(1.dp))
         Text(
             text = tab.label,
-            fontSize = 12.sp,
+            fontSize = 14.sp,
             fontFamily = FontFamily(Font(R.font.pretendard_medium)),
             fontWeight = FontWeight(600),
             color = textColor,
