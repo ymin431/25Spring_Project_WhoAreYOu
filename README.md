@@ -33,7 +33,7 @@ com.example.whoareyou/
 ├── login/                        # 로그인 관련 로직
 │   ├── LoginScreen.kt           # 로그인 UI 구성 (Google 로그인 버튼 포함)
 │   └── LoginViewModel.kt        # 로그인 상태 관리 및 Google Sign-In 로직 처리
-││
+│
 ├── MainActivity.kt               # 앱 진입점, 로그인 여부에 따라 화면 분기
 └── MainScreen.kt                 # 로그인 이후의 메인 화면 (Scaffold + BottomBar 포함)
 ```
