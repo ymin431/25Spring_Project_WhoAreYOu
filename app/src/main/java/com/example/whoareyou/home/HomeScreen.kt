@@ -1,8 +1,14 @@
 package com.example.whoareyou.home
 
+import android.app.Activity
+import android.content.pm.PackageManager
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,11 +22,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.Font
@@ -30,6 +38,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import com.example.whoareyou.R
 import com.example.whoareyou.component.TopTab
 
@@ -43,6 +52,28 @@ data class Contact(
 
 @Composable
 fun HomeScreen() {
+
+    val context = LocalContext.current
+
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            // 여기서 cameraManager.photoUri 사용 가능 (이미지 경로)
+        }
+    }
+
+    val cameraManager = remember { CameraManager(context, cameraLauncher) }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            cameraManager.launchCamera()
+        } else {
+            Toast.makeText(context, "카메라 권한이 필요합니다", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     val tempContact = Contact(
         image = R.drawable.ic_main_logo,
@@ -66,8 +97,20 @@ fun HomeScreen() {
                 .background(Color.White)
         ) {
             Spacer(Modifier.width(20.dp))
-            ButtonWithLogo(R.drawable.btn_camera, "카메라", "명함 사진 찍기")
-            ButtonWithLogo(R.drawable.btn_gallery, "갤러리", "갤러리에서 선택")
+            ButtonWithLogo(
+                logo = R.drawable.btn_camera,
+                description = "카메라",
+                label = "명함 사진 찍기",
+                onClick = {
+                    val permission = android.Manifest.permission.CAMERA
+                    if (ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED) {
+                        cameraManager.launchCamera()
+                    } else {
+                        permissionLauncher.launch(permission)
+                    }
+                }
+            )
+            ButtonWithLogo(R.drawable.btn_gallery, "갤러리", "갤러리에서 선택", {})
             Spacer(Modifier.width(20.dp))
 
         }
@@ -98,7 +141,12 @@ fun HomeScreen() {
 }
 
 @Composable
-fun ButtonWithLogo(logo: Int, description: String, label: String) {
+fun ButtonWithLogo(
+    logo: Int,
+    description: String,
+    label: String,
+    onClick: () -> Unit
+) {
     Row(
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
@@ -106,15 +154,16 @@ fun ButtonWithLogo(logo: Int, description: String, label: String) {
             .fillMaxWidth(0.9f)
             .clip(RoundedCornerShape(20.dp))
             .background(Color(0xFF007AFF))
+            .clickable { onClick() }
+            .padding(vertical = 20.dp)
     ) {
         Image(
             imageVector = ImageVector.vectorResource(logo),
             contentDescription = description,
-            modifier = Modifier.padding(0.dp, 20.dp)
         )
         Spacer(Modifier.width(10.dp))
         Text(
-            text = "명함 사진 찍기",
+            text = label,
             fontSize = 15.sp,
             fontFamily = FontFamily(Font(R.font.pretendard_bold)),
             color = Color.White,
