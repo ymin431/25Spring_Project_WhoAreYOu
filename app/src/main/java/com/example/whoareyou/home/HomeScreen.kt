@@ -2,6 +2,7 @@ package com.example.whoareyou.home
 
 import android.app.Activity
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -22,7 +23,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -75,6 +79,14 @@ fun HomeScreen() {
         }
     }
 
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        selectedImageUri = uri
+    }
+
     val tempContact = Contact(
         image = R.drawable.ic_main_logo,
         name = "김영희",
@@ -110,7 +122,14 @@ fun HomeScreen() {
                     }
                 }
             )
-            ButtonWithLogo(R.drawable.btn_gallery, "갤러리", "갤러리에서 선택", {})
+            ButtonWithLogo(
+                logo = R.drawable.btn_gallery,
+                description = "갤러리",
+                label = "갤러리에서 선택",
+                onClick = {
+                    galleryLauncher.launch("image/*")
+                }
+            )
             Spacer(Modifier.width(20.dp))
 
         }
