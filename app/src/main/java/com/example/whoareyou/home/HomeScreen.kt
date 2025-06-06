@@ -57,8 +57,6 @@ fun HomeScreen() {
             .fillMaxSize()
             .background(Color(0xFFF2F2F7))
     ) {
-        TopTab()
-
         Column (
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(20.dp),

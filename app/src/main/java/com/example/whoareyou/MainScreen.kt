@@ -15,6 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.whoareyou.component.BottomBar
 import com.example.whoareyou.component.BottomTab
+import com.example.whoareyou.component.TopTab
+import com.example.whoareyou.contactlist.ContactListScreen
 import com.example.whoareyou.home.HomeScreen
 
 @Composable
@@ -22,6 +24,7 @@ fun MainScreen() {
     var selectedTab by rememberSaveable { mutableStateOf(BottomTab.Home) }
 
     Scaffold(
+        topBar = { TopTab() },
         bottomBar = {
             BottomBar(
                 selectedTab = selectedTab,
@@ -36,7 +39,7 @@ fun MainScreen() {
         ) {
             when (selectedTab) {
                 BottomTab.Home -> HomeScreen()
-                BottomTab.Contacts -> {}
+                BottomTab.Contacts -> ContactListScreen()
                 BottomTab.MyPage -> {}
             }
         }

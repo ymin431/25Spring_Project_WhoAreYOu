@@ -74,7 +74,6 @@ fun ContactListScreen() {
             .background(Color(0xFFF2F2F7))
             .verticalScroll(scrollState) // 화면을 넘어가면 세로 스크롤 가능
     ) {
-        TopTab()
         Spacer(modifier = Modifier.height(20.dp))
 
         // 초성별 반복
