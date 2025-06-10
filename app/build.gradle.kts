@@ -5,6 +5,7 @@ plugins {
 
     // 구글 로그인
     id("com.google.gms.google-services")
+    kotlin("kapt")
 }
 
 android {
@@ -43,11 +44,17 @@ android {
 }
 
 dependencies {
-    // To recognize Latin script
-    implementation("com.google.mlkit:text-recognition:16.0.1")
+    // ML Kit dependencies
+    implementation("com.google.mlkit:text-recognition:16.0.0")
+    implementation("com.google.mlkit:text-recognition-korean:16.0.0")
 
-    // To recognize Korean script
-    implementation("com.google.mlkit:text-recognition-korean:16.0.1")
+    // Room dependencies for local storage
+    implementation("androidx.room:room-runtime:2.6.1")
+    implementation("androidx.room:room-ktx:2.6.1")
+    kapt("androidx.room:room-compiler:2.6.1")
+
+    // Coil for image loading
+    implementation("io.coil-kt:coil-compose:2.5.0")
 
     implementation("com.google.android.gms:play-services-auth:21.0.0")
     implementation("com.google.firebase:firebase-auth-ktx:22.3.1")

@@ -40,6 +40,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.whoareyou.R
+import com.example.whoareyou.home.HomeScreen
 import com.example.whoareyou.view.MainScreen
 
 data class Contact(
@@ -301,7 +302,7 @@ fun DataConfirmScreenWrapper(contact: Contact) {
     var goToMain by remember { mutableStateOf(false) }
 
     if (goToMain) {
-        MainScreen()
+        HomeScreen()
     } else {
         DataConfirmScreen(
             onBack = { goToMain = true },
