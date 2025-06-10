@@ -9,6 +9,10 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -19,6 +23,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.whoareyou.R
+import com.example.whoareyou.view.MainScreen
 
 @Composable
 fun OcrLoadingScreen(
@@ -50,7 +55,6 @@ fun OcrLoadingScreen(
 
         Spacer(modifier = Modifier.weight(1.4f))
 
-        // 중앙 텍스트 + 로딩 인디케이터
         Text(
             text = "명함 정보 추출 중...",
             fontFamily = FontFamily(Font(R.font.pretendard_bold)),
@@ -61,7 +65,7 @@ fun OcrLoadingScreen(
         Spacer(modifier = Modifier.height(80.dp))
 
         CircularProgressIndicator(
-            color = Color(0xFF007BFF), // 파란색
+            color = Color(0xFF007BFF),
             strokeWidth = 11.dp,
             modifier = Modifier.size(120.dp)
 
@@ -72,9 +76,20 @@ fun OcrLoadingScreen(
 }
 
 @Composable
+fun OcrLoadingScreenWrapper() {
+    var goToMain by remember { mutableStateOf(false) }
+
+    if (goToMain) {
+        MainScreen()
+    } else {
+        OcrLoadingScreen(
+            onBack = { goToMain = true }
+        )
+    }
+}
+
+@Composable
 @Preview
 fun OcrLoadingScreenPreview() {
-    OcrLoadingScreen(
-        onBack = {}
-    )
+    OcrLoadingScreenWrapper()
 }
