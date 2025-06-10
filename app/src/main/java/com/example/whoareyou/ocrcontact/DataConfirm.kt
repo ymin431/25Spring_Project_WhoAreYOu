@@ -1,6 +1,5 @@
 package com.example.whoareyou.ocrcontact
 
-import android.content.pm.PackageManager
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -13,15 +12,19 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Cancel
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,9 +39,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.ContextCompat
 import com.example.whoareyou.R
-import com.example.whoareyou.home.ButtonWithLogo
 import com.example.whoareyou.view.MainScreen
 
 data class Contact(
@@ -50,6 +51,9 @@ data class Contact(
 
 @Composable
 fun DataConfirmScreen(onBack: () -> Unit, contact: Contact) {
+    var emailValid by remember { mutableStateOf<Boolean?>(null) }
+    val isSaveEnabled = emailValid == true
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -107,7 +111,10 @@ fun DataConfirmScreen(onBack: () -> Unit, contact: Contact) {
             DrawLine()
             ContactBox("전화번호", contact.phoneNumber)
             DrawLine()
-            ContactBox("이메일", contact.email)
+            EmailValidationBox(
+                email = contact.email,
+                onResult = { result -> emailValid = result }
+            )
             DrawLine()
             ContactBox("주소", contact.address)
         }
@@ -118,7 +125,8 @@ fun DataConfirmScreen(onBack: () -> Unit, contact: Contact) {
                 .padding(start = 30.dp, end = 30.dp, top = 20.dp)
         ) {
             Button(
-                onClick = {  },
+                onClick = { if (isSaveEnabled) /* 저장 로직 */ else Unit },
+                enabled = isSaveEnabled,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color.White,
                     contentColor = Color.Black
@@ -136,7 +144,8 @@ fun DataConfirmScreen(onBack: () -> Unit, contact: Contact) {
             }
 
             Button(
-                onClick = {  },
+                onClick = { if (isSaveEnabled) /* 저장 로직 */ else Unit },
+                enabled = isSaveEnabled,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFF007AFF),
                     contentColor = Color.White
@@ -173,6 +182,101 @@ fun ContactBox(param: String, value: String) {
             fontSize = 20.sp,
             color = Color.Black,
             fontFamily = FontFamily(Font(R.font.pretendard_medium)),
+        )
+    }
+}
+
+@Composable
+fun EmailValidationBox(
+    email: String,
+    onResult: (Boolean?) -> Unit
+) {
+    var isLoading by remember { mutableStateOf(true) }
+    var isValid by remember { mutableStateOf<Boolean?>(null) }
+
+    LaunchedEffect(email) {
+        val result = EmailValidation.validateEmail(email)
+        isValid = result?.isValid
+        isLoading = false
+        onResult(result?.isValid)
+    }
+
+    Column {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "이메일",
+                fontSize = 17.sp,
+                color = Color.Black,
+                fontFamily = FontFamily(Font(R.font.pretendard_light))
+            )
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            when {
+                isLoading -> {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(14.dp),
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "검사 중...",
+                            fontSize = 13.sp,
+                            fontFamily = FontFamily(Font(R.font.pretendard_light)),
+                            color = Color.Gray
+                        )
+                    }
+                }
+
+                isValid == true -> {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = "Valid Email",
+                            tint = Color(0xFF4CAF50),
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "유효한 이메일",
+                            fontSize = 13.sp,
+                            color = Color(0xFF4CAF50),
+                            fontFamily = FontFamily(Font(R.font.pretendard_light))
+                        )
+                    }
+                }
+
+                isValid == false -> {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Cancel,
+                            contentDescription = "Invalid Email",
+                            tint = Color.Red,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "유효하지 않음",
+                            fontSize = 13.sp,
+                            color = Color.Red,
+                            fontFamily = FontFamily(Font(R.font.pretendard_light))
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(Modifier.height(10.dp))
+
+        Text(
+            text = email,
+            fontSize = 20.sp,
+            color = Color.Black,
+            fontFamily = FontFamily(Font(R.font.pretendard_medium))
         )
     }
 }
