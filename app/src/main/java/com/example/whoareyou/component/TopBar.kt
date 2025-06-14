@@ -41,18 +41,6 @@ fun TopTab() {
             fontFamily = FontFamily(Font(R.font.racingsansone)),
             modifier = Modifier.padding(start = 20.dp)
         )
-        Row {
-            Image(
-                imageVector = ImageVector.vectorResource(R.drawable.btn_search_bar),
-                contentDescription = "검색"
-            )
-            Spacer(Modifier.width(30.dp))
-            Image(
-                imageVector = ImageVector.vectorResource(R.drawable.btn_setting_bar),
-                contentDescription = "설정"
-            )
-            Spacer(Modifier.width(20.dp))
-        }
     }
 }
 

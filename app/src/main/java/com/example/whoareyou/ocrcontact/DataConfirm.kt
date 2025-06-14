@@ -48,18 +48,24 @@ import com.example.whoareyou.viewmodel.OcrViewModel
 import com.example.whoareyou.viewmodel.OcrState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.LocalContext
-
-data class Contact(
-    val name: String,
-    val phoneNumber: String,
-    val email: String,
-    val address: String
-)
+import com.example.whoareyou.repository.ContactRepository
+import kotlinx.coroutines.launch
+import android.widget.Toast
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.rememberCoroutineScope
 
 @Composable
-fun DataConfirmScreen(onBack: () -> Unit, contact: Contact) {
+fun DataConfirmScreen(
+    onBack: () -> Unit, 
+    contact: Contact,
+    imageUri: Uri? = null,
+    navController: NavController
+) {
     var emailValid by remember { mutableStateOf<Boolean?>(null) }
     val isSaveEnabled = emailValid == true
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val repository = remember { ContactRepository() }
 
     Column(
         modifier = Modifier
@@ -123,7 +129,7 @@ fun DataConfirmScreen(onBack: () -> Unit, contact: Contact) {
                 onResult = { result -> emailValid = result }
             )
             DrawLine()
-            ContactBox("주소", contact.address)
+            ContactBox("주소", contact.addressText)
         }
 
         Row(
@@ -151,7 +157,23 @@ fun DataConfirmScreen(onBack: () -> Unit, contact: Contact) {
             }
 
             Button(
-                onClick = { if (isSaveEnabled) /* 저장 로직 */ else Unit },
+                onClick = {
+                    if (isSaveEnabled) {
+                        scope.launch {
+                            repository.saveContact(contact, imageUri)
+                                .onSuccess {
+                                    Toast.makeText(context, "명함이 저장되었습니다", Toast.LENGTH_SHORT).show()
+                                    navController.navigate("home") {
+                                        popUpTo("home") { inclusive = false }
+                                        launchSingleTop = true
+                                    }
+                                }
+                                .onFailure {
+                                    Toast.makeText(context, "저장 실패: ${it.message}", Toast.LENGTH_SHORT).show()
+                                }
+                        }
+                    }
+                },
                 enabled = isSaveEnabled,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFF007AFF),
@@ -160,7 +182,7 @@ fun DataConfirmScreen(onBack: () -> Unit, contact: Contact) {
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier
                     .weight(1f)
-
+                    .fillMaxWidth()
             ) {
                 Text(
                     text = "저장하기",
@@ -327,14 +349,17 @@ fun DataConfirmScreenWrapper(imageUri: Uri?, navController: NavController) {
         when (ocrState) {
             is OcrState.Success -> DataConfirmScreen(
                 onBack = { goToMain = true },
-                contact = (ocrState as OcrState.Success).contact
+                contact = (ocrState as OcrState.Success).contact,
+                imageUri = imageUri,
+                navController = navController
             )
             is OcrState.Error -> DataConfirmScreen(
                 onBack = { goToMain = true },
-                contact = Contact("오류", "", (ocrState as OcrState.Error).message, "")
+                contact = Contact("오류", "", (ocrState as OcrState.Error).message, ""),
+                imageUri = imageUri,
+                navController = navController
             )
             else -> {
-                // 로딩 UI (간단하게 텍스트로 표시)
                 Column(
                     modifier = Modifier.fillMaxSize(),
                     horizontalAlignment = Alignment.CenterHorizontally,

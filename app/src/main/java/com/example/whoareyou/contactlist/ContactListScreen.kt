@@ -31,21 +31,6 @@ data class Contact(
     val imageRes: Int
 )
 
-fun getInitial(name: String): String {
-    if (name.isEmpty()) return ""
-    val ch = name.first()
-    if (ch in '\uAC00'..'\uD7A3') {
-        val syllableIndex = ch.code - 0xAC00
-        val choIndex = syllableIndex / (21 * 28)
-        val initials = listOf(
-            "ㄱ", "ㄲ", "ㄴ", "ㄷ", "ㄸ", "ㄹ", "ㅁ", "ㅂ", "ㅃ",
-            "ㅅ", "ㅆ", "ㅇ", "ㅈ", "ㅉ", "ㅊ", "ㅋ", "ㅌ", "ㅍ", "ㅎ"
-        )
-        return initials[choIndex]
-    }
-    return ch.toString()
-}
-
 @Composable
 fun ContactListScreen() {
     // 예시 데이터

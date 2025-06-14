@@ -11,6 +11,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -20,19 +21,25 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
@@ -45,6 +52,11 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import com.example.whoareyou.R
 import androidx.navigation.NavController
+import coil.compose.rememberAsyncImagePainter
+import com.example.whoareyou.ocrcontact.Contact
+import com.example.whoareyou.repository.ContactRepository
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 data class Contact(
     val image: Int,
@@ -57,6 +69,16 @@ data class Contact(
 @Composable
 fun HomeScreen(navController: NavController) {
     val context = LocalContext.current
+    val repository = remember { ContactRepository() }
+    var recentContacts by remember { mutableStateOf<List<Contact>>(emptyList()) }
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit) {
+        repository.getRecentContacts().collectLatest { contacts ->
+            recentContacts = contacts
+        }
+    }
+
     var cameraManager by remember { mutableStateOf<CameraManager?>(null) }
 
     val cameraLauncher = rememberLauncherForActivityResult(
@@ -101,16 +123,16 @@ fun HomeScreen(navController: NavController) {
     )
 
     Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFFF2F2F7))
+            .padding(16.dp)
     ) {
-        Column (
+        Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(20.dp),
             modifier = Modifier
-                .fillMaxWidth(0.9f)
+                .fillMaxWidth(1f)
                 .clip(RoundedCornerShape(20.dp))
                 .background(Color.White)
         ) {
@@ -139,27 +161,37 @@ fun HomeScreen(navController: NavController) {
             Spacer(Modifier.width(20.dp))
         }
 
-        Spacer(Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
-        Column (
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-            modifier = Modifier
-                .fillMaxWidth(0.9f)
-                .clip(RoundedCornerShape(20.dp))
-                .background(Color.White)
-        ) {
-            Text(
-                text = "최근 추가된 연락처",
-                fontSize = 17.sp,
-                fontFamily = FontFamily(Font(R.font.pretendard_semibold)),
-                modifier = Modifier.padding(top = 25.dp, start = 30.dp, bottom = 10.dp)
-            )
-            RecentlyAddedContact(tempContact)
-            RecentlyAddedContact(tempContact)
-            RecentlyAddedContact(tempContact)
-            RecentlyAddedContact(tempContact)
-            RecentlyAddedContact(tempContact)
-            Spacer(Modifier.height(10.dp))
+        Text(
+            text = "최근 연락처",
+            fontSize = 20.sp,
+            fontFamily = FontFamily(Font(R.font.pretendard_bold)),
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+
+        if (recentContacts.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(100.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "저장된 연락처가 없습니다",
+                    color = Color.Gray,
+                    fontSize = 16.sp,
+                    fontFamily = FontFamily(Font(R.font.pretendard_medium))
+                )
+            }
+        } else {
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(recentContacts) { contact ->
+                    RecentContactItem(contact = contact)
+                }
+            }
         }
     }
 }
@@ -197,41 +229,70 @@ fun ButtonWithLogo(
 }
 
 @Composable
-fun RecentlyAddedContact(contact: Contact) {
-    Row(
+fun RecentContactItem(contact: Contact) {
+    Card(
         modifier = Modifier
-            .padding(30.dp, 0.dp)
-    ) {
-        Image(
-            painter = painterResource(contact.image),
-            contentDescription = contact.name,
-            modifier = Modifier
-                .size(50.dp)
-                .border(0.1.dp, Color(0xFF999999), shape = RoundedCornerShape(8.dp))
+            .fillMaxWidth()
+            .height(80.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
         )
-        Spacer(Modifier.width(10.dp))
-        Column (
-            modifier = Modifier.padding(0.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = contact.name,
-                fontSize = 14.sp,
-                fontFamily = FontFamily(Font(R.font.pretendard_semibold)),
-            )
-            Text(
-                text = contact.phoneNumber,
-                fontSize = 12.sp,
-                lineHeight = 12.sp,
-                fontFamily = FontFamily(Font(R.font.pretendard_light)),
-                modifier = Modifier.padding(0.dp)
-            )
-            Text(
-                text = contact.email,
-                fontSize = 12.sp,
-                lineHeight = 12.sp,
-                fontFamily = FontFamily(Font(R.font.pretendard_light)),
-                modifier = Modifier.padding(0.dp)
-            )
+            // 프로필 이미지
+            if (contact.imageURL.isNotEmpty()) {
+                Image(
+                    painter = rememberAsyncImagePainter(contact.imageURL),
+                    contentDescription = "Contact Image",
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(RoundedCornerShape(8.dp)),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color(0xFF007AFF)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = contact.name.firstOrNull()?.toString() ?: "",
+                        fontSize = 24.sp,
+                        color = Color.White,
+                        fontFamily = FontFamily(Font(R.font.pretendard_bold))
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            Column {
+                Text(
+                    text = contact.name,
+                    fontSize = 14.sp,
+                    fontFamily = FontFamily(Font(R.font.pretendard_semibold))
+                )
+                Text(
+                    text = contact.phoneNumber,
+                    fontSize = 12.sp,
+                    lineHeight = 12.sp,
+                    fontFamily = FontFamily(Font(R.font.pretendard_light)),
+                    modifier = Modifier.padding(0.dp)
+                )
+                Text(
+                    text = contact.email,
+                    fontSize = 12.sp,
+                    lineHeight = 12.sp,
+                    fontFamily = FontFamily(Font(R.font.pretendard_light)),
+                    modifier = Modifier.padding(0.dp)
+                )
+            }
         }
     }
 }
