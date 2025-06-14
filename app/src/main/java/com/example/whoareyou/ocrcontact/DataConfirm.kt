@@ -41,7 +41,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.whoareyou.R
 import com.example.whoareyou.home.HomeScreen
-import com.example.whoareyou.view.MainScreen
+import androidx.navigation.NavController
+import android.net.Uri
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.whoareyou.viewmodel.OcrViewModel
+import com.example.whoareyou.viewmodel.OcrState
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.platform.LocalContext
 
 data class Contact(
     val name: String,
@@ -79,7 +85,7 @@ fun DataConfirmScreen(onBack: () -> Unit, contact: Contact) {
             )
         }
 
-        Spacer(Modifier.height(40.dp))
+        Spacer(Modifier.height(10.dp))
 
         Text(
             text = "연락처 확인",
@@ -298,21 +304,54 @@ fun DrawLine() {
 }
 
 @Composable
-fun DataConfirmScreenWrapper(contact: Contact) {
+fun DataConfirmScreenWrapper(imageUri: Uri?, navController: NavController) {
     var goToMain by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val ocrViewModel: OcrViewModel = viewModel()
+    val ocrState by ocrViewModel.ocrState.collectAsState()
+    var ocrStarted by remember { mutableStateOf(false) }
+
+    LaunchedEffect(imageUri) {
+        if (imageUri != null && !ocrStarted) {
+            ocrViewModel.processImage(context, imageUri)
+            ocrStarted = true
+        }
+    }
 
     if (goToMain) {
-        HomeScreen()
+        navController.navigate("home") {
+            popUpTo("home") { inclusive = false }
+            launchSingleTop = true
+        }
     } else {
-        DataConfirmScreen(
-            onBack = { goToMain = true },
-            contact = contact
-        )
+        when (ocrState) {
+            is OcrState.Success -> DataConfirmScreen(
+                onBack = { goToMain = true },
+                contact = (ocrState as OcrState.Success).contact
+            )
+            is OcrState.Error -> DataConfirmScreen(
+                onBack = { goToMain = true },
+                contact = Contact("오류", "", (ocrState as OcrState.Error).message, "")
+            )
+            else -> {
+                // 로딩 UI (간단하게 텍스트로 표시)
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    CircularProgressIndicator()
+                    Spacer(Modifier.height(16.dp))
+                    Text("명함 정보 추출 중...")
+                }
+            }
+        }
     }
 }
 
 @Composable
 @Preview
 fun DataConfirmScreenPreview() {
-    DataConfirmScreenWrapper(Contact("가나디", "010-1234-1234", "abc123@naver.com", "경상남도 양산시"))
+    // 프리뷰에서는 navController를 넘길 수 없으니 주석 처리
+    // DataConfirmScreenWrapper(Contact("가나디", "010-1234-1234", "abc123@naver.com", "경상남도 양산시"), navController)
 }

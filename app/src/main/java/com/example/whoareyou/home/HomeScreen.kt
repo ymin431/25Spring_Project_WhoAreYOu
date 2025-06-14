@@ -44,7 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import com.example.whoareyou.R
-import com.example.whoareyou.ocrcontact.OcrLoadingScreen
+import androidx.navigation.NavController
 
 data class Contact(
     val image: Int,
@@ -55,18 +55,18 @@ data class Contact(
 )
 
 @Composable
-fun HomeScreen() {
+fun HomeScreen(navController: NavController) {
     val context = LocalContext.current
-    var showOcrLoading by remember { mutableStateOf(false) }
-    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var cameraManager by remember { mutableStateOf<CameraManager?>(null) }
 
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            selectedImageUri = cameraManager?.photoUri
-            showOcrLoading = true
+            val uri = cameraManager?.photoUri
+            if (uri != null) {
+                navController.navigate("data_confirm?imageUri=${Uri.encode(uri.toString())}")
+            }
         }
     }
 
@@ -88,8 +88,7 @@ fun HomeScreen() {
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         uri?.let {
-            selectedImageUri = it
-            showOcrLoading = true
+            navController.navigate("data_confirm?imageUri=${Uri.encode(it.toString())}")
         }
     }
 
@@ -101,73 +100,66 @@ fun HomeScreen() {
         address = "부산광역시"
     )
 
-    if (showOcrLoading && selectedImageUri != null) {
-        OcrLoadingScreen(
-            onBack = { showOcrLoading = false },
-            imageUri = selectedImageUri!!
-        )
-    } else {
-        Column(
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFFF2F2F7))
+    ) {
+        Column (
             horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(20.dp),
             modifier = Modifier
-                .fillMaxSize()
-                .background(Color(0xFFF2F2F7))
+                .fillMaxWidth(0.9f)
+                .clip(RoundedCornerShape(20.dp))
+                .background(Color.White)
         ) {
-            Column (
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(20.dp),
-                modifier = Modifier
-                    .fillMaxWidth(0.9f)
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(Color.White)
-            ) {
-                Spacer(Modifier.width(20.dp))
-                ButtonWithLogo(
-                    logo = R.drawable.btn_camera,
-                    description = "카메라",
-                    label = "명함 사진 찍기",
-                    onClick = {
-                        val permission = android.Manifest.permission.CAMERA
-                        if (ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED) {
-                            cameraManager?.launchCamera()
-                        } else {
-                            permissionLauncher.launch(permission)
-                        }
+            Spacer(Modifier.width(20.dp))
+            ButtonWithLogo(
+                logo = R.drawable.btn_camera,
+                description = "카메라",
+                label = "명함 사진 찍기",
+                onClick = {
+                    val permission = android.Manifest.permission.CAMERA
+                    if (ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED) {
+                        cameraManager?.launchCamera()
+                    } else {
+                        permissionLauncher.launch(permission)
                     }
-                )
-                ButtonWithLogo(
-                    logo = R.drawable.btn_gallery,
-                    description = "갤러리",
-                    label = "갤러리에서 선택",
-                    onClick = {
-                        galleryLauncher.launch("image/*")
-                    }
-                )
-                Spacer(Modifier.width(20.dp))
-            }
+                }
+            )
+            ButtonWithLogo(
+                logo = R.drawable.btn_gallery,
+                description = "갤러리",
+                label = "갤러리에서 선택",
+                onClick = {
+                    galleryLauncher.launch("image/*")
+                }
+            )
+            Spacer(Modifier.width(20.dp))
+        }
 
-            Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(20.dp))
 
-            Column (
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-                modifier = Modifier
-                    .fillMaxWidth(0.9f)
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(Color.White)
-            ) {
-                Text(
-                    text = "최근 추가된 연락처",
-                    fontSize = 17.sp,
-                    fontFamily = FontFamily(Font(R.font.pretendard_semibold)),
-                    modifier = Modifier.padding(top = 25.dp, start = 30.dp, bottom = 10.dp)
-                )
-                RecentlyAddedContact(tempContact)
-                RecentlyAddedContact(tempContact)
-                RecentlyAddedContact(tempContact)
-                RecentlyAddedContact(tempContact)
-                RecentlyAddedContact(tempContact)
-                Spacer(Modifier.height(10.dp))
-            }
+        Column (
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+            modifier = Modifier
+                .fillMaxWidth(0.9f)
+                .clip(RoundedCornerShape(20.dp))
+                .background(Color.White)
+        ) {
+            Text(
+                text = "최근 추가된 연락처",
+                fontSize = 17.sp,
+                fontFamily = FontFamily(Font(R.font.pretendard_semibold)),
+                modifier = Modifier.padding(top = 25.dp, start = 30.dp, bottom = 10.dp)
+            )
+            RecentlyAddedContact(tempContact)
+            RecentlyAddedContact(tempContact)
+            RecentlyAddedContact(tempContact)
+            RecentlyAddedContact(tempContact)
+            RecentlyAddedContact(tempContact)
+            Spacer(Modifier.height(10.dp))
         }
     }
 }
@@ -244,11 +236,8 @@ fun RecentlyAddedContact(contact: Contact) {
     }
 }
 
-@Composable
-@Preview
-fun HomeScreenPreview() {
-    HomeScreen()
-}
-
-// ... existing code ...
-// ... existing code ...
+//@Composable
+//@Preview
+//fun HomeScreenPreview() {
+//    HomeScreen(navController = null)
+//}

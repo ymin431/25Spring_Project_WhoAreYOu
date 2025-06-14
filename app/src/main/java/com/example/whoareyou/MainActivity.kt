@@ -1,6 +1,5 @@
 package com.example.whoareyou
 
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -47,6 +46,7 @@ class MainActivity : ComponentActivity() {
 //import android.os.Bundle
 //import androidx.activity.ComponentActivity
 //import androidx.activity.compose.setContent
+//import com.example.whoareyou.home.HomeScreen
 //import com.example.whoareyou.ocrcontact.OcrLoadingScreen
 //import com.example.whoareyou.ui.theme.WhoAreYOuTheme
 //
@@ -56,11 +56,7 @@ class MainActivity : ComponentActivity() {
 //
 //        setContent {
 //            WhoAreYOuTheme {
-//                OcrLoadingScreen(
-//                    onBack = {
-//                        // 임시로 아무 동작 없음 (혹은 finish() 등도 가능)
-//                    }
-//                )
+//                HomeScreen()
 //            }
 //        }
 //    }
