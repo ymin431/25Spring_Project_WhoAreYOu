@@ -102,4 +102,7 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+    //구글맵 연동
+    implementation("com.google.android.gms:play-services-maps:18.2.0")
 }

@@ -1,8 +1,10 @@
 package com.example.whoareyou.contactlist
 
+import android.content.Intent
+import android.net.Uri
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -21,13 +23,14 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import coil.compose.rememberAsyncImagePainter
 import com.example.whoareyou.R
 import com.example.whoareyou.ocrcontact.Contact
 import com.example.whoareyou.repository.ContactRepository
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
 
 fun getInitial(name: String): String {
     if (name.isEmpty()) return ""
@@ -45,11 +48,10 @@ fun getInitial(name: String): String {
 }
 
 @Composable
-fun ContactListScreen(navController: NavController) {
+fun ContactListScreen(navController: NavHostController) {
     val context = LocalContext.current
     val repository = remember { ContactRepository() }
     var contacts by remember { mutableStateOf<List<Contact>>(emptyList()) }
-    val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
         repository.getAllContacts().collectLatest { contactList ->
@@ -122,14 +124,16 @@ fun ContactListScreen(navController: NavController) {
 
 @Composable
 fun ContactItem(contact: Contact) {
+    val context = LocalContext.current
+    val db = FirebaseFirestore.getInstance()
+    val currentUser = FirebaseAuth.getInstance().currentUser
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .height(80.dp),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        )
+        colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Row(
             modifier = Modifier
@@ -166,9 +170,7 @@ fun ContactItem(contact: Contact) {
 
             Spacer(modifier = Modifier.width(16.dp))
 
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = contact.name,
                     fontSize = 14.sp,
@@ -178,26 +180,60 @@ fun ContactItem(contact: Contact) {
                     text = contact.phoneNumber,
                     fontSize = 12.sp,
                     lineHeight = 12.sp,
-                    fontFamily = FontFamily(Font(R.font.pretendard_light)),
-                    modifier = Modifier.padding(0.dp)
+                    fontFamily = FontFamily(Font(R.font.pretendard_light))
                 )
                 Text(
                     text = contact.email,
                     fontSize = 12.sp,
                     lineHeight = 12.sp,
-                    fontFamily = FontFamily(Font(R.font.pretendard_light)),
-                    modifier = Modifier.padding(0.dp)
+                    fontFamily = FontFamily(Font(R.font.pretendard_light))
                 )
             }
 
             Spacer(modifier = Modifier.width(10.dp))
-            
-            Icon(
-                imageVector = ImageVector.vectorResource(id = R.drawable.ic_location),
-                contentDescription = "위치 보기",
-                modifier = Modifier.size(24.dp),
-                tint = Color(0xFF007AFF)
-            )
+
+            IconButton(
+                onClick = {
+                    Log.d("ContactList", "지도 아이콘 클릭됨")
+                    Log.d("ContactList", "Contact ID: ${contact.id}")
+
+                    currentUser?.let { user ->
+                        db.collection("users")
+                            .document(user.uid)
+                            .collection("contacts")
+                            .document(contact.id)
+                            .get()
+                            .addOnSuccessListener { document ->
+                                val geoPoint = document.getGeoPoint("addressGeopoint")
+                                if (geoPoint != null) {
+                                    val uri = Uri.parse(
+                                        "https://www.google.com/maps/search/?api=1&query=${geoPoint.latitude},${geoPoint.longitude}"
+                                    )
+                                    val intent = Intent(Intent.ACTION_VIEW, uri).apply {
+                                        setPackage("com.google.android.apps.maps")
+                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    }
+                                    context.startActivity(intent)
+                                } else {
+                                    Log.d("ContactList", "위치 정보가 없습니다")
+                                }
+                            }
+                            .addOnFailureListener { e ->
+                                Log.e("ContactList", "Firestore 문서 가져오기 실패", e)
+                            }
+                    } ?: Log.e("ContactList", "현재 로그인된 사용자가 없습니다")
+                },
+                modifier = Modifier
+                    .size(48.dp)
+                    .background(Color.Transparent)
+            ) {
+                Icon(
+                    imageVector = ImageVector.vectorResource(id = R.drawable.ic_location),
+                    contentDescription = "위치 보기",
+                    modifier = Modifier.size(24.dp),
+                    tint = Color(0xFF007AFF)
+                )
+            }
         }
     }
-} 
+}
