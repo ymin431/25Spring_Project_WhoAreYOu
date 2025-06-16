@@ -204,10 +204,11 @@ fun ContactItem(contact: Contact) {
                             .document(contact.id)
                             .get()
                             .addOnSuccessListener { document ->
-                                val geoPoint = document.getGeoPoint("addressGeopoint")
-                                if (geoPoint != null) {
+                                val address = document.getString("addressText")
+                                if (!address.isNullOrEmpty()) {
+                                    val encodedAddress = Uri.encode(address)
                                     val uri = Uri.parse(
-                                        "https://www.google.com/maps/search/?api=1&query=${geoPoint.latitude},${geoPoint.longitude}"
+                                        "https://www.google.com/maps/search/?api=1&query=$encodedAddress"
                                     )
                                     val intent = Intent(Intent.ACTION_VIEW, uri).apply {
                                         setPackage("com.google.android.apps.maps")
@@ -215,7 +216,7 @@ fun ContactItem(contact: Contact) {
                                     }
                                     context.startActivity(intent)
                                 } else {
-                                    Log.d("ContactList", "위치 정보가 없습니다")
+                                    Log.d("ContactList", "주소 정보가 없습니다")
                                 }
                             }
                             .addOnFailureListener { e ->
