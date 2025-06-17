@@ -11,6 +11,7 @@ import com.example.whoareyou.login.LoginScreen
 import com.example.whoareyou.login.LoginViewModel
 import com.example.whoareyou.ui.theme.WhoAreYOuTheme
 import com.example.whoareyou.view.MainScreen
+import com.google.firebase.auth.FirebaseAuth
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -19,15 +20,27 @@ class MainActivity : ComponentActivity() {
         setContent {
             WhoAreYOuTheme {
                 val loginViewModel: LoginViewModel by viewModels()
+                val currentUser = remember { mutableStateOf(FirebaseAuth.getInstance().currentUser) }
 
-                val userName by loginViewModel.userName
+                // 로그인 상태 변경 감지
+                DisposableEffect(Unit) {
+                    val authStateListener = FirebaseAuth.AuthStateListener { auth ->
+                        currentUser.value = auth.currentUser
+                    }
+                    FirebaseAuth.getInstance().addAuthStateListener(authStateListener)
+                    
+                    onDispose {
+                        FirebaseAuth.getInstance().removeAuthStateListener(authStateListener)
+                    }
+                }
+
                 val launcher = rememberLauncherForActivityResult(
                     contract = ActivityResultContracts.StartActivityForResult()
                 ) { result ->
                     loginViewModel.login(result) {}
                 }
 
-                if (userName == null) {
+                if (currentUser.value == null) {
                     LoginScreen(
                         onGoogleLoginClicked = {
                             launcher.launch(loginViewModel.getSignInIntent(this))

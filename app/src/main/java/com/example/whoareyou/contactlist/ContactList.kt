@@ -59,6 +59,13 @@ fun ContactListScreen(navController: NavHostController) {
         }
     }
 
+    // 화면이 표시될 때마다 데이터를 새로 불러옴
+    LaunchedEffect(navController.currentBackStackEntry) {
+        repository.getAllContacts().collectLatest { contactList ->
+            contacts = contactList
+        }
+    }
+
     // 연락처를 초성별로 그룹화
     val groupedContacts = contacts
         .sortedBy { it.name }

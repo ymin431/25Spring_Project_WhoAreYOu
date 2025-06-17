@@ -79,6 +79,12 @@ fun HomeScreen(navController: NavController) {
         }
     }
 
+    LaunchedEffect(navController.currentBackStackEntry) {
+        repository.getRecentContacts().collectLatest { contacts ->
+            recentContacts = contacts
+        }
+    }
+
     var cameraManager by remember { mutableStateOf<CameraManager?>(null) }
 
     val cameraLauncher = rememberLauncherForActivityResult(

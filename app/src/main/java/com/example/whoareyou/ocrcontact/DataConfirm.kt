@@ -1,5 +1,11 @@
 package com.example.whoareyou.ocrcontact
 
+import android.app.Activity
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -42,17 +48,16 @@ import androidx.compose.ui.unit.sp
 import com.example.whoareyou.R
 import com.example.whoareyou.home.HomeScreen
 import androidx.navigation.NavController
-import android.net.Uri
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.whoareyou.viewmodel.OcrViewModel
-import com.example.whoareyou.viewmodel.OcrState
-import androidx.compose.runtime.collectAsState
-import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
+import com.example.whoareyou.home.CameraManager
 import com.example.whoareyou.repository.ContactRepository
 import kotlinx.coroutines.launch
-import android.widget.Toast
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.whoareyou.viewmodel.OcrState
+import com.example.whoareyou.viewmodel.OcrViewModel
 
 @Composable
 fun DataConfirmScreen(
@@ -66,6 +71,35 @@ fun DataConfirmScreen(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val repository = remember { ContactRepository() }
+
+    var cameraManager by remember { mutableStateOf<CameraManager?>(null) }
+
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val uri = cameraManager?.photoUri
+            if (uri != null) {
+                navController.navigate("data_confirm?imageUri=${Uri.encode(uri.toString())}") {
+                    popUpTo("data_confirm") { inclusive = true }
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(cameraLauncher) {
+        cameraManager = CameraManager(context, cameraLauncher)
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            cameraManager?.launchCamera()
+        } else {
+            Toast.makeText(context, "카메라 권한이 필요합니다", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -138,15 +172,20 @@ fun DataConfirmScreen(
                 .padding(start = 30.dp, end = 30.dp, top = 20.dp)
         ) {
             Button(
-                onClick = { if (isSaveEnabled) /* 저장 로직 */ else Unit },
-                enabled = isSaveEnabled,
+                onClick = {
+                    val permission = android.Manifest.permission.CAMERA
+                    if (ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED) {
+                        cameraManager?.launchCamera()
+                    } else {
+                        permissionLauncher.launch(permission)
+                    }
+                },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color.White,
                     contentColor = Color.Black
                 ),
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.weight(1f)
-
             ) {
                 Text(
                     text = "다시 찍기",
