@@ -22,9 +22,11 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
+import androidx.navigation.NavHostController
+import com.google.firebase.auth.FirebaseAuth
 
 @Composable
-fun MyPageScreen() {
+fun MyPageScreen(navController: NavHostController) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -75,19 +77,34 @@ fun MyPageScreen() {
             )
             
             // 설정 메뉴 아이템들
-            MenuItem("로그아웃")
+            MenuItem(
+                text = "로그아웃",
+                onClick = {
+                    FirebaseAuth.getInstance().signOut()
+                    navController.navigate("login") {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            )
         }
     }
 }
 
 @Composable
-fun MenuItem(text: String) {
-    Text(
-        text = text,
-        fontSize = 16.sp,
-        fontFamily = FontFamily(Font(R.font.pretendard_medium)),
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 12.dp)
-    )
+fun MenuItem(
+    text: String,
+    onClick: () -> Unit
+) {
+    TextButton(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(
+            text = text,
+            fontSize = 16.sp,
+            fontFamily = FontFamily(Font(R.font.pretendard_medium)),
+            color = Color(0xFF007AFF),
+            modifier = Modifier.padding(vertical = 12.dp)
+        )
+    }
 }

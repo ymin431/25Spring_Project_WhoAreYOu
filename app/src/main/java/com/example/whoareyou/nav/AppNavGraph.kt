@@ -11,6 +11,9 @@ import com.example.whoareyou.contactlist.ContactListScreen
 import com.example.whoareyou.home.HomeScreen
 import com.example.whoareyou.mypage.MyPageScreen
 import com.example.whoareyou.ocrcontact.DataConfirmScreenWrapper
+import com.example.whoareyou.login.LoginScreen
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.whoareyou.login.LoginViewModel
 
 @Composable
 fun AppNavGraph(navController: NavHostController) {
@@ -18,6 +21,19 @@ fun AppNavGraph(navController: NavHostController) {
         navController = navController,
         startDestination = "home"
     ) {
+        composable("login") {
+            val loginViewModel: LoginViewModel = viewModel()
+            LoginScreen(
+                loginViewModel = loginViewModel,
+                onGoogleLoginClicked = {
+                    // 구글 로그인 성공 후 홈 화면으로 이동
+                    navController.navigate("home") {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            )
+        }
+
         composable("home") {
             HomeScreen(navController)
         }
@@ -27,7 +43,7 @@ fun AppNavGraph(navController: NavHostController) {
         }
 
         composable("mypage") {
-            MyPageScreen()
+            MyPageScreen(navController)
         }
 
         composable(
