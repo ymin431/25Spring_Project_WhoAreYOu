@@ -10,7 +10,7 @@ object EmailValidation {
     suspend fun validateEmail(email: String): EmailValidationResult? {
         return withContext(Dispatchers.IO) {
             try {
-                val apiKey = "21d46de4476b418cb78c00cc8dfd12e0"
+                val apiKey = "dc7153a56b684e4faae9e56f28276df4"
                 val apiUrl = "https://emailvalidation.abstractapi.com/v1/?api_key=$apiKey&email=$email"
 
                 val connection = URL(apiUrl).openConnection() as HttpURLConnection

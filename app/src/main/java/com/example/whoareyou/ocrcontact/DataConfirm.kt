@@ -134,8 +134,6 @@ fun DataConfirmScreen(
             fontFamily = FontFamily(Font(R.font.pretendard_bold)),
         )
 
-        Spacer(Modifier.height(50.dp))
-
         Text(
             text = "명함에서 추출된 정보를 확인해주세요.",
             fontSize = 20.sp,
