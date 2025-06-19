@@ -64,7 +64,7 @@ fun DataConfirmScreen(
     onBack: () -> Unit, 
     contact: Contact,
     imageUri: Uri? = null,
-    navController: NavController,
+    navController: NavController?,
     onRetakePhoto: (Uri) -> Unit
 ) {
     var emailValid by remember { mutableStateOf<Boolean?>(null) }
@@ -200,7 +200,7 @@ fun DataConfirmScreen(
                             repository.saveContact(contact, imageUri)
                                 .onSuccess {
                                     Toast.makeText(context, "명함이 저장되었습니다", Toast.LENGTH_SHORT).show()
-                                    navController.navigate("home") {
+                                    navController?.navigate("home") {
                                         popUpTo("home") { inclusive = false }
                                         launchSingleTop = true
                                     }
@@ -363,7 +363,7 @@ fun DrawLine() {
 }
 
 @Composable
-fun DataConfirmScreenWrapper(imageUri: Uri?, navController: NavController) {
+fun DataConfirmScreenWrapper(imageUri: Uri?, navController: NavController?) {
     var goToMain by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val ocrViewModel: OcrViewModel = viewModel()
@@ -426,9 +426,11 @@ fun DataConfirmScreenWrapper(imageUri: Uri?, navController: NavController) {
     }
 
     if (goToMain) {
-        navController.navigate("home") {
-            popUpTo("home") { inclusive = false }
-            launchSingleTop = true
+        if (navController != null) {
+            navController.navigate("home") {
+                popUpTo("home") { inclusive = false }
+                launchSingleTop = true
+            }
         }
     } else {
         when (ocrState) {
