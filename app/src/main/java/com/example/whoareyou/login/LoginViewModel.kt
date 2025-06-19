@@ -40,7 +40,6 @@ class LoginViewModel : ViewModel() {
 
         viewModelScope.launch {
             try {
-                // Google 로그인 결과 처리
                 val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
                 if (!task.isSuccessful) {
                     Log.e(TAG, "Google 로그인 태스크 실패: ${task.exception}")
@@ -54,7 +53,6 @@ class LoginViewModel : ViewModel() {
                 }
                 Log.d(TAG, "Google 계정 가져오기 성공: ${account.email}")
 
-                // Firebase 인증
                 val credential = GoogleAuthProvider.getCredential(account.idToken, null)
                 val authResult = FirebaseAuth.getInstance().signInWithCredential(credential).await()
 

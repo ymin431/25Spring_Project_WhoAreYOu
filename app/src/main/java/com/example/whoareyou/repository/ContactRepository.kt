@@ -22,16 +22,13 @@ class ContactRepository {
         val userId = auth.currentUser?.uid ?: throw Exception("User not logged in")
         Log.d(TAG, "연락처 저장 시작 - 사용자: $userId")
         
-        // 1. 이미지가 있으면 Storage에 업로드
         val imageURL = imageUri?.let { uploadImage(it) } ?: ""
         
-        // 2. Contact 객체 생성 (이미지 URL 포함)
         val contactWithImage = contact.copy(
             imageURL = imageURL,
             savedAt = com.google.firebase.Timestamp.now()
         )
         
-        // 3. Firestore에 저장
         db.collection("users")
             .document(userId)
             .collection("contacts")

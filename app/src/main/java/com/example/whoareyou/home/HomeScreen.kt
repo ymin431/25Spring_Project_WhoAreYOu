@@ -302,9 +302,3 @@ fun RecentContactItem(contact: Contact) {
         }
     }
 }
-
-//@Composable
-//@Preview
-//fun HomeScreenPreview() {
-//    HomeScreen(navController = null)
-//}

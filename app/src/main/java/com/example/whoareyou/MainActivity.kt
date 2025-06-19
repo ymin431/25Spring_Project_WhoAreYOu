@@ -22,7 +22,6 @@ class MainActivity : ComponentActivity() {
                 val loginViewModel: LoginViewModel by viewModels()
                 val currentUser = remember { mutableStateOf(FirebaseAuth.getInstance().currentUser) }
 
-                // 로그인 상태 변경 감지
                 DisposableEffect(Unit) {
                     val authStateListener = FirebaseAuth.AuthStateListener { auth ->
                         currentUser.value = auth.currentUser
@@ -53,24 +52,3 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
-//package com.example.whoareyou
-//
-//import android.os.Bundle
-//import androidx.activity.ComponentActivity
-//import androidx.activity.compose.setContent
-//import com.example.whoareyou.home.HomeScreen
-//import com.example.whoareyou.ocrcontact.OcrLoadingScreen
-//import com.example.whoareyou.ui.theme.WhoAreYOuTheme
-//
-//class MainActivity : ComponentActivity() {
-//    override fun onCreate(savedInstanceState: Bundle?) {
-//        super.onCreate(savedInstanceState)
-//
-//        setContent {
-//            WhoAreYOuTheme {
-//                HomeScreen()
-//            }
-//        }
-//    }
-//}

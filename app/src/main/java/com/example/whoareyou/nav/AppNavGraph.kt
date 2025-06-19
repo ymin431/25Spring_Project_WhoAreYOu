@@ -26,7 +26,6 @@ fun AppNavGraph(navController: NavHostController) {
             LoginScreen(
                 loginViewModel = loginViewModel,
                 onGoogleLoginClicked = {
-                    // 구글 로그인 성공 후 홈 화면으로 이동
                     navController.navigate("home") {
                         popUpTo(0) { inclusive = true }
                     }

@@ -53,7 +53,6 @@ class OcrViewModel : ViewModel() {
                 Log.d("OcrViewModel", "전체 텍스트: ${result.text}")
                 Log.d("OcrViewModel", "텍스트 블록 수: ${result.textBlocks.size}")
                 
-                // 각 텍스트 블록의 상세 정보 출력
                 result.textBlocks.forEachIndexed { index, block ->
                     Log.d("OcrViewModel", "블록 $index: '${block.text}'")
                     Log.d("OcrViewModel", "  - 라인 수: ${block.lines.size}")
@@ -91,13 +90,11 @@ class OcrViewModel : ViewModel() {
             Log.d("OcrViewModel", "=== 이미지 로드 시작 ===")
             Log.d("OcrViewModel", "URI: $uri")
 
-            // 비트맵 로드
             val inputStream = context.contentResolver.openInputStream(uri)
             val bitmap = BitmapFactory.decodeStream(inputStream)
             inputStream?.close()
             if (bitmap == null) throw IOException("비트맵 디코딩 실패")
 
-            // EXIF 회전 보정
             val fileDescriptor = context.contentResolver.openFileDescriptor(uri, "r")?.fileDescriptor
             val exif = fileDescriptor?.let { ExifInterface(it) }
             val orientation = exif?.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
@@ -123,28 +120,24 @@ class OcrViewModel : ViewModel() {
         Log.d("OcrViewModel", "=== 텍스트 추출 시작 ===")
         Log.d("OcrViewModel", "입력 텍스트: '$text'")
         
-        // 1. 이름 추출 (한글 2~5자, 공백 제거)
         val namePattern = Regex("(?m)^([가-힣]{2,5})\\s*$")
         val nameMatch = namePattern.find(text)
         val name = nameMatch?.groupValues?.get(1)?.trim() ?: "이름 없음"
         Log.d("OcrViewModel", "이름 패턴 매칭 결과: ${nameMatch?.groupValues}")
         Log.d("OcrViewModel", "추출된 이름: '$name'")
 
-        // 2. 전화번호 추출 (010, 011 등 다양한 패턴, 하이픈/공백/점 모두)
         val phonePattern = Regex("(01[016789]|02|0[3-9][0-9])[- .]?\\d{3,4}[- .]?\\d{4}")
         val phoneMatch = phonePattern.find(text)
         val phoneNumber = phoneMatch?.value?.replace(" ", "") ?: "전화번호 없음"
         Log.d("OcrViewModel", "전화번호 패턴 매칭 결과: ${phoneMatch?.value}")
         Log.d("OcrViewModel", "추출된 전화번호: '$phoneNumber'")
 
-        // 3. 이메일 추출
         val emailPattern = Regex("[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}")
         val emailMatch = emailPattern.find(text)
         val email = emailMatch?.value ?: "이메일 없음"
         Log.d("OcrViewModel", "이메일 패턴 매칭 결과: ${emailMatch?.value}")
         Log.d("OcrViewModel", "추출된 이메일: '$email'")
 
-        // 4. 주소 추출 (이름이 포함된 라인은 제외)
         val lines = text.lines().filter { it.trim().isNotEmpty() }
         Log.d("OcrViewModel", "텍스트 라인들: $lines")
         

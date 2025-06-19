@@ -38,7 +38,6 @@ fun MyPageScreen(navController: NavHostController) {
             .background(Color(0xFFF2F2F7))
             .padding(16.dp)
     ) {
-        // 프로필 섹션
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -66,7 +65,6 @@ fun MyPageScreen(navController: NavHostController) {
         
         Spacer(modifier = Modifier.height(20.dp))
         
-        // 설정 메뉴
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -81,18 +79,15 @@ fun MyPageScreen(navController: NavHostController) {
                 modifier = Modifier.padding(bottom = 16.dp)
             )
             
-            // 설정 메뉴 아이템들
             MenuItem(
                 text = "로그아웃",
                 onClick = {
-                    // Google 로그아웃 먼저 수행
                     val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                         .requestIdToken(context.getString(R.string.default_web_client_id))
                         .requestEmail()
                         .build()
                     val googleSignInClient = GoogleSignIn.getClient(context, gso)
                     googleSignInClient.signOut().addOnCompleteListener {
-                        // Google 로그아웃 완료 후 Firebase 로그아웃
                         FirebaseAuth.getInstance().signOut()
                         navController.navigate("login") {
                             popUpTo(0) { inclusive = true }

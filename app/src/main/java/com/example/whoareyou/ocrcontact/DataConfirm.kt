@@ -380,7 +380,6 @@ fun DataConfirmScreenWrapper(imageUri: Uri?, navController: NavController) {
             val uri = cameraManager?.photoUri
             if (uri != null) {
                 android.util.Log.d("DataConfirm", "새로운 사진 촬영 완료: $uri")
-                // OCR 상태 완전 초기화
                 ocrViewModel.resetOcrState()
                 lastProcessedUri = null
                 currentImageUri = uri
@@ -402,7 +401,6 @@ fun DataConfirmScreenWrapper(imageUri: Uri?, navController: NavController) {
         }
     }
 
-    // 새로운 이미지 URI가 있고, 아직 처리되지 않은 경우에만 OCR 처리
     LaunchedEffect(currentImageUri) {
         if (currentImageUri != null && currentImageUri != lastProcessedUri) {
             android.util.Log.d("DataConfirm", "새로운 이미지로 OCR 처리 시작: $currentImageUri")
@@ -412,7 +410,6 @@ fun DataConfirmScreenWrapper(imageUri: Uri?, navController: NavController) {
         }
     }
 
-    // OCR 상태 변화 감지
     LaunchedEffect(ocrState) {
         when (ocrState) {
             is OcrState.Initial -> android.util.Log.d("DataConfirm", "OCR 상태: Initial")
@@ -442,7 +439,6 @@ fun DataConfirmScreenWrapper(imageUri: Uri?, navController: NavController) {
                 navController = navController,
                 onRetakePhoto = { newImageUri ->
                     android.util.Log.d("DataConfirm", "다시 찍기 요청: $newImageUri")
-                    // OCR 상태 완전 초기화
                     ocrViewModel.resetOcrState()
                     lastProcessedUri = null
                     currentImageUri = newImageUri
@@ -547,11 +543,4 @@ fun DataConfirmScreenWrapper(imageUri: Uri?, navController: NavController) {
             }
         }
     }
-}
-
-@Composable
-@Preview
-fun DataConfirmScreenPreview() {
-    // 프리뷰에서는 navController를 넘길 수 없으니 주석 처리
-    // DataConfirmScreenWrapper(Contact("가나디", "010-1234-1234", "abc123@naver.com", "경상남도 양산시"), navController)
 }
