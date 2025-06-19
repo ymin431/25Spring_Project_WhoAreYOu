@@ -64,7 +64,8 @@ fun DataConfirmScreen(
     onBack: () -> Unit, 
     contact: Contact,
     imageUri: Uri? = null,
-    navController: NavController
+    navController: NavController,
+    onRetakePhoto: (Uri) -> Unit
 ) {
     var emailValid by remember { mutableStateOf<Boolean?>(null) }
     val isSaveEnabled = emailValid == true
@@ -80,9 +81,7 @@ fun DataConfirmScreen(
         if (result.resultCode == Activity.RESULT_OK) {
             val uri = cameraManager?.photoUri
             if (uri != null) {
-                navController.navigate("data_confirm?imageUri=${Uri.encode(uri.toString())}") {
-                    popUpTo("data_confirm") { inclusive = true }
-                }
+                onRetakePhoto(uri)
             }
         }
     }
@@ -171,6 +170,7 @@ fun DataConfirmScreen(
         ) {
             Button(
                 onClick = {
+                    android.util.Log.d("DataConfirm", "DataConfirmScreen에서 다시 찍기 버튼 클릭")
                     val permission = android.Manifest.permission.CAMERA
                     if (ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED) {
                         cameraManager?.launchCamera()
@@ -368,12 +368,63 @@ fun DataConfirmScreenWrapper(imageUri: Uri?, navController: NavController) {
     val context = LocalContext.current
     val ocrViewModel: OcrViewModel = viewModel()
     val ocrState by ocrViewModel.ocrState.collectAsState()
-    var ocrStarted by remember { mutableStateOf(false) }
+    var currentImageUri by remember { mutableStateOf(imageUri) }
+    var lastProcessedUri by remember { mutableStateOf<Uri?>(null) }
 
-    LaunchedEffect(imageUri) {
-        if (imageUri != null && !ocrStarted) {
-            ocrViewModel.processImage(context, imageUri)
-            ocrStarted = true
+    var cameraManager by remember { mutableStateOf<CameraManager?>(null) }
+
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val uri = cameraManager?.photoUri
+            if (uri != null) {
+                android.util.Log.d("DataConfirm", "새로운 사진 촬영 완료: $uri")
+                // OCR 상태 완전 초기화
+                ocrViewModel.resetOcrState()
+                lastProcessedUri = null
+                currentImageUri = uri
+            }
+        }
+    }
+
+    LaunchedEffect(cameraLauncher) {
+        cameraManager = CameraManager(context, cameraLauncher)
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            cameraManager?.launchCamera()
+        } else {
+            Toast.makeText(context, "카메라 권한이 필요합니다", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    // 새로운 이미지 URI가 있고, 아직 처리되지 않은 경우에만 OCR 처리
+    LaunchedEffect(currentImageUri) {
+        if (currentImageUri != null && currentImageUri != lastProcessedUri) {
+            android.util.Log.d("DataConfirm", "새로운 이미지로 OCR 처리 시작: $currentImageUri")
+            android.util.Log.d("DataConfirm", "이전 처리된 URI: $lastProcessedUri")
+            ocrViewModel.processImage(context, currentImageUri!!)
+            lastProcessedUri = currentImageUri
+        }
+    }
+
+    // OCR 상태 변화 감지
+    LaunchedEffect(ocrState) {
+        when (ocrState) {
+            is OcrState.Initial -> android.util.Log.d("DataConfirm", "OCR 상태: Initial")
+            is OcrState.Loading -> android.util.Log.d("DataConfirm", "OCR 상태: Loading")
+            is OcrState.Success -> {
+                val contact = (ocrState as OcrState.Success).contact
+                android.util.Log.d("DataConfirm", "OCR 상태: Success - $contact")
+            }
+            is OcrState.Error -> {
+                val error = (ocrState as OcrState.Error).message
+                android.util.Log.e("DataConfirm", "OCR 상태: Error - $error")
+            }
         }
     }
 
@@ -387,15 +438,102 @@ fun DataConfirmScreenWrapper(imageUri: Uri?, navController: NavController) {
             is OcrState.Success -> DataConfirmScreen(
                 onBack = { goToMain = true },
                 contact = (ocrState as OcrState.Success).contact,
-                imageUri = imageUri,
-                navController = navController
+                imageUri = currentImageUri,
+                navController = navController,
+                onRetakePhoto = { newImageUri ->
+                    android.util.Log.d("DataConfirm", "다시 찍기 요청: $newImageUri")
+                    // OCR 상태 완전 초기화
+                    ocrViewModel.resetOcrState()
+                    lastProcessedUri = null
+                    currentImageUri = newImageUri
+                }
             )
-            is OcrState.Error -> DataConfirmScreen(
-                onBack = { goToMain = true },
-                contact = Contact("오류", "", (ocrState as OcrState.Error).message, ""),
-                imageUri = imageUri,
-                navController = navController
-            )
+            is OcrState.Error -> {
+                val errorMessage = (ocrState as OcrState.Error).message
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color(0xFFF2F2F7))
+                        .padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Cancel,
+                        contentDescription = "Error",
+                        tint = Color.Red,
+                        modifier = Modifier.size(64.dp)
+                    )
+                    
+                    Spacer(Modifier.height(16.dp))
+                    
+                    Text(
+                        text = "OCR 처리 실패",
+                        fontSize = 24.sp,
+                        color = Color.Black,
+                        fontFamily = FontFamily(Font(R.font.pretendard_bold))
+                    )
+                    
+                    Spacer(Modifier.height(8.dp))
+                    
+                    Text(
+                        text = errorMessage,
+                        fontSize = 16.sp,
+                        color = Color.Gray,
+                        fontFamily = FontFamily(Font(R.font.pretendard_light)),
+                        modifier = Modifier.padding(horizontal = 32.dp)
+                    )
+                    
+                    Spacer(Modifier.height(32.dp))
+                    
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.padding(horizontal = 30.dp)
+                    ) {
+                        Button(
+                            onClick = { goToMain = true },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color.White,
+                                contentColor = Color.Black
+                            ),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(
+                                text = "돌아가기",
+                                fontSize = 18.sp,
+                                fontFamily = FontFamily(Font(R.font.pretendard_medium)),
+                                modifier = Modifier.padding(7.dp)
+                            )
+                        }
+                        
+                        Button(
+                            onClick = {
+                                android.util.Log.d("DataConfirm", "오류 화면에서 다시 촬영 버튼 클릭")
+                                val permission = android.Manifest.permission.CAMERA
+                                if (ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED) {
+                                    cameraManager?.launchCamera()
+                                } else {
+                                    permissionLauncher.launch(permission)
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF007AFF),
+                                contentColor = Color.White
+                            ),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(
+                                text = "다시 촬영",
+                                fontSize = 18.sp,
+                                fontFamily = FontFamily(Font(R.font.pretendard_medium)),
+                                modifier = Modifier.padding(7.dp)
+                            )
+                        }
+                    }
+                }
+            }
             else -> {
                 Column(
                     modifier = Modifier.fillMaxSize(),
