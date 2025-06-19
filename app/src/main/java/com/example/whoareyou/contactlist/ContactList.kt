@@ -209,14 +209,8 @@ fun ContactItem(contact: Contact) {
                             .addOnSuccessListener { document ->
                                 val address = document.getString("addressText")
                                 if (!address.isNullOrEmpty()) {
-                                    val encodedAddress = Uri.encode(address)
-                                    val uri = Uri.parse(
-                                        "https://www.google.com/maps/search/?api=1&query=$encodedAddress"
-                                    )
-                                    val intent = Intent(Intent.ACTION_VIEW, uri).apply {
-                                        setPackage("com.google.android.apps.maps")
-                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                    }
+                                    val intent = Intent(context, com.example.whoareyou.view.MapActivity::class.java)
+                                    intent.putExtra("address", address)
                                     context.startActivity(intent)
                                 } else {
                                     Log.d("ContactList", "주소 정보가 없습니다")
